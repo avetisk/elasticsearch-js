@@ -9,46 +9,46 @@ export declare class ElasticsearchClientError extends Error {
   message: string;
 }
 
-export declare class TimeoutError extends ElasticsearchClientError {
+export class TimeoutError extends ElasticsearchClientError {
   name: string;
   message: string;
   meta: ApiResponse;
   constructor(message: string, meta: ApiResponse);
 }
 
-export declare class ConnectionError extends ElasticsearchClientError {
+export class ConnectionError extends ElasticsearchClientError {
   name: string;
   message: string;
   meta: ApiResponse;
   constructor(message: string, meta: ApiResponse);
 }
 
-export declare class NoLivingConnectionsError extends ElasticsearchClientError {
+export class NoLivingConnectionsError extends ElasticsearchClientError {
   name: string;
   message: string;
   meta: ApiResponse;
   constructor(message: string, meta: ApiResponse);
 }
 
-export declare class SerializationError extends ElasticsearchClientError {
+export class SerializationError extends ElasticsearchClientError {
   name: string;
   message: string;
   constructor(message: string);
 }
 
-export declare class DeserializationError extends ElasticsearchClientError {
+export class DeserializationError extends ElasticsearchClientError {
   name: string;
   message: string;
   constructor(message: string);
 }
 
-export declare class ConfigurationError extends ElasticsearchClientError {
+export class ConfigurationError extends ElasticsearchClientError {
   name: string;
   message: string;
   constructor(message: string);
 }
 
-export declare class ResponseError extends ElasticsearchClientError {
+export class ResponseError extends ElasticsearchClientError {
   name: string;
   message: string;
   meta: ApiResponse;

@@ -2,9 +2,17 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+import { Readable as ReadableStream } from 'stream'
 import { ConnectionPool, CloudConnectionPool } from './pool';
 import Connection from './Connection';
 import Serializer from './Serializer';
+import {
+  ConnectionError,
+  TimeoutError,
+  NoLivingConnectionsError,
+  ResponseError,
+  ConfigurationError
+} from './errors'
 
 export interface nodeSelectorFn {
   (connections: Connection[]): Connection;
@@ -22,20 +30,20 @@ declare type noopFn = (...args: any[]) => void;
 declare type emitFn = (event: string | symbol, ...args: any[]) => boolean;
 
 interface TransportOptions {
-  emit: emitFn & noopFn;
+  emit: emitFn;
   connectionPool: ConnectionPool | CloudConnectionPool;
   serializer: Serializer;
   maxRetries: number;
   requestTimeout: number | string;
   suggestCompression: boolean;
   compression?: 'gzip';
-  sniffInterval: number;
+  sniffInterval: number | boolean;
   sniffOnConnectionFault: boolean;
   sniffEndpoint: string;
   sniffOnStart: boolean;
   nodeFilter?: nodeFilterFn;
   nodeSelector?: string | nodeSelectorFn;
-  headers?: anyObject;
+  headers?: Record<string, any>;
   generateRequestId?: generateRequestIdFn;
   name: string;
 }
@@ -43,7 +51,7 @@ interface TransportOptions {
 export interface RequestEvent<T = any, C = any> {
   body: T;
   statusCode: number | null;
-  headers: anyObject | null;
+  headers: Record<string, any> | null;
   warnings: string[] | null;
   meta: {
     context: C;
@@ -67,33 +75,32 @@ export interface RequestEvent<T = any, C = any> {
 // we are doing this for have more clear names
 export interface ApiResponse<T = any, C = any> extends RequestEvent<T, C> {}
 
-declare type anyObject = {
-  [key: string]: any;
-};
-
 export interface TransportRequestParams {
   method: string;
   path: string;
-  body?: anyObject;
-  bulkBody?: anyObject;
-  querystring?: anyObject;
+  body?: Record<string, any> | string | ReadableStream;
+  bulkBody?: Array<Record<string, any>> | string | ReadableStream;
+  querystring?: Record<string, any>;
 }
 
 export interface TransportRequestOptions {
-  ignore?: [number];
+  ignore?: number[];
   requestTimeout?: number | string;
   maxRetries?: number;
   asStream?: boolean;
-  headers?: anyObject;
-  querystring?: anyObject;
+  headers?: Record<string, any>;
+  querystring?: Record<string, any>;
   compression?: string;
   id?: any;
   context?: any;
-  warnings?: [string];
+  warnings?: string[];
 }
 
-export interface TransportRequestCallback {
-  abort: () => void;
+export type TransportErrors = ConnectionError | TimeoutError | NoLivingConnectionsError | ResponseError | ConfigurationError | null
+export type TransportRequestCallback = (err: TransportErrors, result: ApiResponse) => void
+
+export interface TransportRequestReturn {
+  abort: () => void
 }
 
 export interface TransportGetConnectionOptions {
@@ -107,10 +114,10 @@ export interface TransportSniffOptions {
 
 export default class Transport {
   static sniffReasons: {
-    SNIFF_ON_START: string;
-    SNIFF_INTERVAL: string;
-    SNIFF_ON_CONNECTION_FAULT: string;
-    DEFAULT: string;
+    SNIFF_ON_START: 'sniff-on-start',
+    SNIFF_INTERVAL: 'sniff-interval',
+    SNIFF_ON_CONNECTION_FAULT: 'sniff-on-connection-fault',
+    DEFAULT: 'default'
   };
   emit: emitFn & noopFn;
   connectionPool: ConnectionPool | CloudConnectionPool;
@@ -126,8 +133,9 @@ export default class Transport {
   _nextSniff: number;
   _isSniffing: boolean;
   constructor(opts: TransportOptions);
-  request(params: TransportRequestParams, options?: TransportRequestOptions): Promise<ApiResponse>;
-  request(params: TransportRequestParams, options?: TransportRequestOptions, callback?: (err: Error | null, result: ApiResponse) => void): TransportRequestCallback;
+  request (params: TransportRequestParams, options?: TransportRequestOptions): Promise<ApiResponse>
+  request (params: TransportRequestParams, callback: TransportRequestCallback): TransportRequestReturn
+  request (params: TransportRequestParams, options: TransportRequestOptions, callback: TransportRequestCallback): TransportRequestReturn
   getConnection(opts: TransportGetConnectionOptions): Connection | null;
   sniff(opts?: TransportSniffOptions, callback?: (...args: any[]) => void): void;
 }

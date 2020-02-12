@@ -14,7 +14,8 @@ import Transport, {
   nodeFilterFn,
   nodeSelectorFn,
   generateRequestIdFn,
-  TransportRequestCallback
+  TransportRequestCallback,
+  TransportErrors
 } from './lib/Transport';
 import { URL } from 'url';
 import Connection, { AgentOptions, agentFn } from './lib/Connection';
@@ -23,11 +24,7 @@ import Serializer from './lib/Serializer';
 import * as RequestParams from './api/requestParams';
 import * as errors from './lib/errors';
 
-declare type anyObject = {
-  [key: string]: any;
-};
-
-declare type callbackFn<T> = (err: Error | null, result: ApiResponse<T>) => void;
+declare type callbackFn<T> = (err: TransportErrors, result: ApiResponse<T>) => void;
 
 interface ApiMethod<TParams, TBody = any> {
   // Promise API
@@ -63,7 +60,7 @@ interface NodeOptions {
   id?: string;
   agent?: AgentOptions;
   ssl?: TlsConnectionOptions;
-  headers?: anyObject;
+  headers?: Record<string, any>;
   roles?: {
     master: boolean;
     data: boolean;
@@ -93,7 +90,7 @@ interface ClientOptions {
   agent?: AgentOptions | agentFn;
   nodeFilter?: nodeFilterFn;
   nodeSelector?: nodeSelectorFn | string;
-  headers?: anyObject;
+  headers?: Record<string, any>;
   generateRequestId?: generateRequestIdFn;
   name?: string;
   auth?: BasicAuth | ApiKeyAuth;

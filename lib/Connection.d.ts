@@ -6,6 +6,7 @@
 
 import { URL } from 'url';
 import { inspect, InspectOptions } from 'util';
+import { Readable as ReadableStream } from 'stream'
 import { ApiKeyAuth, BasicAuth } from './pool'
 import * as http from 'http';
 import { ConnectionOptions as TlsConnectionOptions } from 'tls';
@@ -25,28 +26,28 @@ interface ConnectionOptions {
 
 interface RequestOptions extends http.ClientRequestArgs {
   asStream?: boolean;
-  body?: any;
+  body?: string | ReadableStream | Buffer;
   querystring?: string;
 }
 
 export interface AgentOptions {
-  keepAlive: boolean;
-  keepAliveMsecs: number;
-  maxSockets: number;
-  maxFreeSockets: number;
+  keepAlive?: boolean;
+  keepAliveMsecs?: number;
+  maxSockets?: number;
+  maxFreeSockets?: number;
 }
 
 export default class Connection {
   static statuses: {
-    ALIVE: string;
-    DEAD: string;
-  };
+    ALIVE: 'alive',
+    DEAD: 'dead'
+  }
   static roles: {
-    MASTER: string;
-    DATA: string;
-    INGEST: string;
-    ML: string;
-  };
+    MASTER: 'master',
+    DATA: 'data',
+    INGEST: 'ingest',
+    ML: 'ml'
+  }
   url: URL;
   ssl: TlsConnectionOptions | null;
   id: string;
@@ -69,5 +70,3 @@ export default class Connection {
   [inspect.custom](object: any, options: InspectOptions): string;
   toJSON(): any;
 }
-
-export {};
